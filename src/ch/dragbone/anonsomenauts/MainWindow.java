@@ -25,6 +25,7 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.io.FileUtils;
 
 public class MainWindow implements DocumentListener{
+	private static final String buttonTextWorking = "Working...", buttonTextReady = "Anonify";
 
 	private JFrame frame;
 	private JTextField replayDirectoryTextField;
@@ -116,10 +117,37 @@ public class MainWindow implements DocumentListener{
 		playernameLabel.setBounds(10, 42, 89, 14);
 		frame.getContentPane().add(playernameLabel);
 
-		JButton anonifyButton = new JButton("Anonify");
+		final JButton anonifyButton = new JButton(buttonTextReady);
 		anonifyButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				new Replay(replayDirectoryTextField.getText(), playernameTextField.getText()).anonify();
+				SwingUtilities.invokeLater(new Runnable(){
+					@Override
+					public void run(){
+						anonifyButton.setEnabled(false);
+						anonifyButton.setText(buttonTextWorking);
+						anonifyButton.validate();
+						anonifyButton.repaint();
+					}
+				});
+				new Thread(){
+					public void run(){
+						try{
+							new Replay(replayDirectoryTextField.getText(), playernameTextField.getText()).anonify();
+						}catch(IOException e1){
+							e1.printStackTrace();
+							new ExceptionDialog(frame, e1);
+						}
+						SwingUtilities.invokeLater(new Runnable(){
+							@Override
+							public void run(){
+								anonifyButton.setEnabled(true);
+								anonifyButton.setText(buttonTextReady);
+								anonifyButton.validate();
+								anonifyButton.repaint();
+							}
+						});
+					}
+				}.start();
 			}
 		});
 		anonifyButton.setBounds(450, 227, 89, 23);

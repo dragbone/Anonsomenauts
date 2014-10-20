@@ -25,15 +25,22 @@ public final class Replay{
 
 	/**
 	 * Creates a copy of the given replay and replaces all personal data in that copy
+	 * @throws IOException 
 	 */
-	void anonify(){
+	void anonify() throws IOException{
 		File originalReplayFolder = new File(replayPath);
 
 		// Check if it is an existing folder
-		if(!originalReplayFolder.isDirectory() || !originalReplayFolder.exists()){
-			//TODO display message
+		if(!originalReplayFolder.exists()){
+			throw new IOException("Selected folder does not exist");
 		}
-		// TODO check if folder contains a replay
+		if(!originalReplayFolder.isDirectory() || !originalReplayFolder.exists()){
+			throw new IOException("Selected folder is not a folder");
+		}
+		if(!new File(originalReplayFolder, "Chatlog.info").exists()
+				|| !new File(originalReplayFolder, "Replays.info").exists()){
+			throw new IOException("Selected folder does not contain a replay");
+		}
 
 		/*
 		 * Copy Replay
@@ -50,42 +57,27 @@ public final class Replay{
 		File anonReplayFolder = new File(anonReplayPath);
 		if(anonReplayFolder.exists()){
 			// TODO Ask if overwrite replay
-			try{
-				FileUtils.deleteDirectory(anonReplayFolder);
-			}catch(IOException ioe){
-				// TODO handle
-				ioe.printStackTrace();
-			}
+			FileUtils.deleteDirectory(anonReplayFolder);
 		}
 		anonReplayFolder.mkdir();
-		try{
-			FileUtils.copyDirectory(originalReplayFolder, anonReplayFolder);
-		}catch(IOException e){
-			// TODO handle
-			e.printStackTrace();
-		}
+		FileUtils.copyDirectory(originalReplayFolder, anonReplayFolder);
 
 		File chatlogFile = new File(anonReplayFolder, "Chatlog.info");
 		File replaysFile = new File(anonReplayFolder, "Replays.info");
 
-		try{
-			Set<String> names = getNames(replaysFile);
+		Set<String> names = getNames(replaysFile);
 
-			anonifyXML(chatlogFile, names, defaultCharset);
-			anonifyXML(replaysFile, names, dataCharset);
+		anonifyXML(chatlogFile, names, defaultCharset);
+		anonifyXML(replaysFile, names, dataCharset);
 
-			File[] dataFiles = anonReplayFolder.listFiles(new FilenameFilter(){
-				@Override
-				public boolean accept(File dir, String name){
-					return name.endsWith(".blockData") || name.endsWith(".continuousData");
-				}
-			});
-			for(File dataFile : dataFiles){
-				anonifyReplay(dataFile, names);
+		File[] dataFiles = anonReplayFolder.listFiles(new FilenameFilter(){
+			@Override
+			public boolean accept(File dir, String name){
+				return name.endsWith(".blockData") || name.endsWith(".continuousData");
 			}
-		}catch(IOException e){
-			// TODO handle
-			e.printStackTrace();
+		});
+		for(File dataFile : dataFiles){
+			anonifyReplay(dataFile, names);
 		}
 
 		System.out.println("Done");
@@ -134,7 +126,8 @@ public final class Replay{
 			for(String name : names){
 				line = line.replace(name, replacementName);
 			}
-			line = StringHelper.replaceSubMatch(line, " steamId=\"(.*?#\\d{16,18})\"", replacementName + "#31415926535897932");
+			line = StringHelper.replaceSubMatch(line, " steamId=\"(.*?#\\d{16,18})\"", replacementName
+					+ "#31415926535897932");
 			newLines.add(line);
 		}
 		FileUtils.writeLines(file, charsetString, newLines, false);
