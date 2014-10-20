@@ -10,11 +10,10 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.SwingConstants;
-import javax.swing.JTextArea;
 
 public class ExceptionDialog extends JDialog{
 	private static final long serialVersionUID = 5402122879594257117L;
