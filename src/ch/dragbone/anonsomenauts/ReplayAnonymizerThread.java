@@ -11,23 +11,37 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
-public final class Replay{
+public final class ReplayAnonymizerThread extends Thread{
 	private static final String charsetString = "UTF-8";
 	public static final Charset defaultCharset = Charset.forName(charsetString), dataCharset = Charset
 			.forName("ISO-8859-1");
 
 	private final String replayPath, replacementName;
-
-	Replay(String replayPath, String replacementName){
+	private final AnonsomenautsWindow window;
+	
+	ReplayAnonymizerThread(String replayPath, String replacementName, AnonsomenautsWindow window){
 		this.replayPath = replayPath;
 		this.replacementName = replacementName;
+		this.window=window;
+		start();
+	}
+	
+	public void run(){
+		window.disableButton();
+		try{
+			anonify();
+		}catch(IOException e1){
+			e1.printStackTrace();
+			new ExceptionDialog(window.getFrame(), e1);
+		}
+		window.enableButton();
 	}
 
 	/**
 	 * Creates a copy of the given replay and replaces all personal data in that copy
 	 * @throws IOException 
 	 */
-	void anonify() throws IOException{
+	private void anonify() throws IOException{
 		File originalReplayFolder = new File(replayPath);
 
 		// Check if it is an existing folder
