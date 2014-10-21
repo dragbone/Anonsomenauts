@@ -126,4 +126,10 @@ public class BitData{
 		}
 		System.out.println();
 	}
+
+	public boolean[] read(int pos, int length){
+		boolean[] ret = new boolean[length];
+		System.arraycopy(data, pos, ret, 0, length);
+		return ret;
+	}
 }

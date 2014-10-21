@@ -62,6 +62,10 @@ public final class Replay{
 		anonReplayFolder.mkdir();
 		FileUtils.copyDirectory(originalReplayFolder, anonReplayFolder);
 
+		/*
+		 * Anonymize copied replay
+		 */
+
 		File chatlogFile = new File(anonReplayFolder, "Chatlog.info");
 		File replaysFile = new File(anonReplayFolder, "Replays.info");
 
@@ -93,16 +97,19 @@ public final class Replay{
 		// Replace (ascii) text
 		String fileContents = new String(FileUtils.readFileToByteArray(replayFile), dataCharset);
 		for(String name : names){
-			fileContents = fileContents.replace(name, replacementName);
+			fileContents = fileContents.replace(name + " ", replacementName);
 		}
 
 		// Replace bit compressed strings
 		byte[] data = fileContents.getBytes(dataCharset);
 		BitData bd = new BitData(data);
-		int pos = -1;
+		int pos;
+
 		for(String name : names){
+			pos = -1; // not needed but more clear this way
+			boolean[] nameBits = buildBoolArrayFromString(name);
 			do{
-				pos = bd.find(name.getBytes(dataCharset), pos + 1);
+				pos = bd.find(nameBits, pos + 1);
 				if(pos != -1){
 					bd.replace(pos, name.length() * 8, BitData.byteToBoolArray(replacementName.getBytes()));
 				}
@@ -110,6 +117,31 @@ public final class Replay{
 		}
 		data = bd.toByteArray();
 		FileUtils.writeByteArrayToFile(replayFile, data, false);
+	}
+
+	private static final boolean[] stringBitPrefix = {true, false, true, false}, stringBitSuffix = {false, false,
+			false, false, false, false, false, false};
+
+	/**
+	 * Generate search bit sequence from string
+	 * @param str
+	 * @return
+	 */
+	private boolean[] buildBoolArrayFromString(String str){
+		boolean[] ret = new boolean[stringBitPrefix.length + str.length() * 8 + stringBitSuffix.length];
+		int pos = 0;
+		
+		// Prefix: 1010
+		System.arraycopy(stringBitPrefix, 0, ret, pos, stringBitPrefix.length);
+		pos += stringBitPrefix.length;
+		// String bits
+		System.arraycopy(BitData.byteToBoolArray(str.getBytes(dataCharset)), 0, ret, pos, str.length() * 8);
+		pos += str.length() * 8;
+		// Suffix: 00000000
+		System.arraycopy(stringBitPrefix, 0, ret, pos, stringBitPrefix.length);
+		pos += stringBitSuffix.length;
+
+		return ret;
 	}
 
 	/**
