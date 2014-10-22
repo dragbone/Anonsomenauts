@@ -18,14 +18,15 @@ public final class ReplayAnonymizerThread extends Thread{
 
 	private final String replayPath, replacementName;
 	private final AnonsomenautsWindow window;
-	
+	private int streamReplacements = 0;
+
 	ReplayAnonymizerThread(String replayPath, String replacementName, AnonsomenautsWindow window){
 		this.replayPath = replayPath;
 		this.replacementName = replacementName;
-		this.window=window;
+		this.window = window;
 		start();
 	}
-	
+
 	public void run(){
 		window.disableButton();
 		try{
@@ -99,6 +100,7 @@ public final class ReplayAnonymizerThread extends Thread{
 		}
 
 		System.out.println("Done");
+		System.out.println("Replaced " + streamReplacements + " names in " + dataFiles.length + " files.");
 	}
 
 	/**
@@ -125,7 +127,9 @@ public final class ReplayAnonymizerThread extends Thread{
 			do{
 				pos = bd.find(nameBits, pos + 1);
 				if(pos != -1){
-					bd.replace(pos, name.length() * 8, BitData.byteToBoolArray(replacementName.getBytes()));
+					++streamReplacements;
+					bd.replace(pos + stringBitPrefix.length, name.length() * 8,
+							BitData.byteToBoolArray(replacementName.getBytes()));
 				}
 			}while(pos != -1);
 		}
@@ -144,7 +148,7 @@ public final class ReplayAnonymizerThread extends Thread{
 	private boolean[] buildBoolArrayFromString(String str){
 		boolean[] ret = new boolean[stringBitPrefix.length + str.length() * 8 + stringBitSuffix.length];
 		int pos = 0;
-		
+
 		// Prefix: 1010
 		System.arraycopy(stringBitPrefix, 0, ret, pos, stringBitPrefix.length);
 		pos += stringBitPrefix.length;
@@ -152,7 +156,7 @@ public final class ReplayAnonymizerThread extends Thread{
 		System.arraycopy(BitData.byteToBoolArray(str.getBytes(dataCharset)), 0, ret, pos, str.length() * 8);
 		pos += str.length() * 8;
 		// Suffix: 00000000
-		System.arraycopy(stringBitPrefix, 0, ret, pos, stringBitPrefix.length);
+		System.arraycopy(stringBitSuffix, 0, ret, pos, stringBitSuffix.length);
 		pos += stringBitSuffix.length;
 
 		return ret;

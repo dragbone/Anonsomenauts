@@ -34,10 +34,8 @@ public class BitData{
 		int diff = rep.length - length;
 		boolean[] newData = new boolean[data.length + diff];
 		System.arraycopy(data, 0, newData, 0, pos);
+		System.arraycopy(rep, 0, newData, pos, rep.length);
 		System.arraycopy(data, pos + length, newData, pos + rep.length, data.length - pos - length);
-		for(int i = pos; i < pos + rep.length; ++i){
-			newData[i] = rep[i - pos];
-		}
 		data = newData;
 	}
 
